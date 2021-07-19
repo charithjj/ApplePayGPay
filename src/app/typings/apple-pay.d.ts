@@ -1,3 +1,4 @@
+// https://medium.com/jspoint/typescript-type-declaration-files-4b29077c43#
 // Type definitions for Apple Pay JS 1.0
 // Project: https://developer.apple.com/reference/applepayjs
 // Definitions by: Martin Costello <https://martincostello.com/>
