@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, RendererStyleF
 
 
 @Component({
-  selector: 'app-apple-pay',
+  selector: 'apple-pay',
   templateUrl: './apple-pay.component.html',
   styleUrls: ['./apple-pay.component.scss']
 })
