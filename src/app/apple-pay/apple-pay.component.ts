@@ -11,6 +11,8 @@ export class ApplePayComponent implements OnInit {
   constructor(private renderer: Renderer2) {
   }
 
+  debugInfo = "Welcomess";
+
   ngOnInit(): void {
   }
 
@@ -26,6 +28,8 @@ export class ApplePayComponent implements OnInit {
   }
 
   validateMerchant() {
+
+    this.debugInfo = "validate merchant";
     return fetch("https://apple-pay-gateway.apple.com/paymentservices/paymentSession", {
       
       // Adding method type
@@ -33,10 +37,10 @@ export class ApplePayComponent implements OnInit {
         
       // Adding body or contents to send
       body: JSON.stringify({
-        merchantIdentifier: "merchant.com.Domain.apple-pay",
+        merchantIdentifier: "merchant.com.integrapaydev1",
         displayName: "Apple Pay Test",
         initiative: "web",
-        initiativeContext: "DomainName.com"
+        initiativeContext: "integrapay.com"
       }),
         
       // Adding headers to the request
@@ -47,10 +51,14 @@ export class ApplePayComponent implements OnInit {
   }
 
   onApplePayClick() {
-    console.log('On Apple Pay Clicked');
+    try
+    {
+      console.log('On Apple Pay Clicked');
+
+    this.debugInfo = this.debugInfo + " " + "apple clicked";
     // Define ApplePayPaymentRequest
     const request = {
-        "countryCode": "AUS",
+        "countryCode": "AU",
         "currencyCode": "AUD",
         "merchantCapabilities": [
             "supports3DS"
@@ -130,6 +138,10 @@ export class ApplePayComponent implements OnInit {
     };
     
     session.begin();
-
+    }
+    catch(e)
+    {
+      this.debugInfo = this.debugInfo + e;
+    }
   }
 }
