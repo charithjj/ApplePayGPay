@@ -124,27 +124,6 @@ export class ApplePayComponent implements OnInit {
 
 
         this.debugInfo = this.debugInfo + "OUT Then"
-        // this.debugInfo = this.debugInfo + "BEFORE CALL "+ new Date().toLocaleString()
-        // const merchantSession = await fetch("https://apptesting-qa.pymnts.com.au/api/internal/applepay/startsession", {
-        //   // Adding method type
-        //   method: "POST",
-            
-        //   // Adding body or contents to send
-        //   body: JSON.stringify({
-        //     ValidationUrl: "https://apple-pay-gateway.apple.com/paymentservices/paymentSession"
-        //   }),
-        //   // Adding headers to the request
-        //   headers: {
-        //       "Content-type": "application/json; charset=UTF-8"
-        //   }
-        // }).then(data => 
-        //   {
-        //     this.debugInfo = this.debugInfo + "INSIDE THEN Start"+ new Date().toLocaleString()
-        //     session.completeMerchantValidation(data);
-        //     this.debugInfo = this.debugInfo + "INSIDE THEN End Data"+ new Date().toLocaleString() + ": " + data;
-        //   });
-
-        // this.debugInfo = this.debugInfo + "AFTER CALL "+ new Date().toLocaleString()
 
         console.log('merchantsession', merchantSession);
         this.debugInfo = this.debugInfo + "-- Merchant Session : " + new Date().toLocaleString()+ JSON.stringify(merchantSession);
