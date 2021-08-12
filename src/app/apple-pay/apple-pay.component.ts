@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, RendererStyleFlags2, ViewChild } from '@angular/core';
-
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'apple-pay',
@@ -8,13 +9,10 @@ import { AfterViewInit, Component, ElementRef, OnInit, Renderer2, RendererStyleF
 })
 export class ApplePayComponent implements OnInit {
   @ViewChild('applePay', {static: false}) but: ElementRef<any>;  
-  constructor(private renderer: Renderer2) {
+  constructor(private renderer: Renderer2, private http: HttpClient) {
   }
 
-  debugInfo = "";
-
-  ngOnInit(): void {
-  }
+  debugLog = "";
 
   ngAfterViewInit() {
     if ((window as any).ApplePaySession) {
@@ -27,59 +25,28 @@ export class ApplePayComponent implements OnInit {
     }
   }
 
- async validateMerchant():Promise<any> {
+  ngOnInit(): void {
+  }
 
-    this.debugInfo = this.debugInfo + "Starting validate merchant" + new Date().toLocaleString();
-    
-    try
-    {
-      //return fetch("https://apple-pay-gateway.apple.com/paymentservices/paymentSession", {
-       // return fetch("https://restapi-qa.pymnts.com.au/internal/applepay/startsession", {
-        var response = await fetch("https://apptesting-qa.pymnts.com.au/api/internal/applepay/startsession", {
-        // Adding method type
-        method: "POST",
-          
-        // Adding body or contents to send
-        body: JSON.stringify({
-          ValidationUrl: "https://apple-pay-gateway.apple.com/paymentservices/paymentSession"
-        }),
-        // body: JSON.stringify({
-        //   merchantIdentifier: "merchant.com.integrapaydev",
-        //   displayName: "ApplePayMerchant",
-        //   initiative: "web",
-        //   initiativeContext: "apptesting-qa.pymnts.com.au"
-        // }),
-        
-        // Adding headers to the request
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-      });
+  GetPaymentSession(uri:string): Observable<any>{    
+    // Adding body or contents to send
+    const body = JSON.stringify({
+      ValidationUrl: uri
+    });
 
-      //const body = await response.json();
+    // Adding headers to the request
+    const header = {"Content-type": "application/json; charset=UTF-8" };
 
-      this.debugInfo = this.debugInfo + "**** RESPONSE " + JSON.stringify(response) + "*** RESPONSE END";
-      //this.debugInfo = this.debugInfo + "**** BODY " + JSON.stringify(body) + "*** BODY END";
+    this.addLog("Calling IntegraPay server" + new Date().toLocaleString() + " Body : " + body);
 
-      return response;
-    }
-    catch(error)
-    {
-      this.debugInfo = this.debugInfo + error;
-      return error;
-    }
-    finally
-    {
-      this.debugInfo = this.debugInfo + " Finally in validateMerchant";
-    }
+    return this.http.post("https://apptesting-qa.pymnts.com.au/internal/applepay/startsession", body, {'headers':header})  
+    //return this.http.post("https://apptesting-qa.pymnts.com.au/internal/applepay/startsession", body, {'headers':header})  
   }
 
   async onApplePayClick() {
     try
     {
-      console.log('On Apple Pay Clicked' + new Date().toLocaleString());
-
-    this.debugInfo = this.debugInfo + " " + "apple clicked" + " " + new Date().toLocaleString();
+       "apple clicked" + " " + new Date().toLocaleString();
 
     // Define ApplePayPaymentRequest
     const request = {
@@ -101,79 +68,78 @@ export class ApplePayComponent implements OnInit {
         }
     };
     
-    this.debugInfo = this.debugInfo + " " + "Creating session.";
-
     // Create ApplePaySession
     //https://developer.apple.com/documentation/apple_pay_on_the_web/apple_pay_js_api/creating_an_apple_pay_session
     //https://developer.apple.com/documentation/apple_pay_on_the_web/apple_pay_on_the_web_version_history
     const session = new (window as any).ApplePaySession(3, request);
-
-    this.debugInfo = this.debugInfo + " " + "Session Created." + JSON.stringify(session);
     
     session.onvalidatemerchant = async (event: any) => {
-        // Call your own server to request a new merchant session.
-        console.log('Inside On Validate Merhant')
-        this.debugInfo = this.debugInfo + new Date().toLocaleString() + ' Inside On Validate Merhant.' + " event: URL" + event.validationURL + " " + JSON.stringify(event) ;
-        
-        
-        const merchantSession = await this.validateMerchant();
-        this.validateMerchant().then(t => {
-          session.completeMerchantValidation(t)
-          this.debugInfo = this.debugInfo + "INSIDE THEN"
-        })
 
+      this.addLog("Start Onvalidatemerchant")
+      this.addLog("ValidationUrl :" + event.validationURL);
+        this.GetPaymentSession(event.validationURL).subscribe(data =>
+          {
+            this.addLog("Received data " + new Date().toLocaleString() + " data " + data);
 
-        this.debugInfo = this.debugInfo + "OUT Then"
+            this.addLog("Before Calling completeMerchantValidation");
 
-        console.log('merchantsession', merchantSession);
-        this.debugInfo = this.debugInfo + "-- Merchant Session : " + new Date().toLocaleString()+ JSON.stringify(merchantSession);
-        //session.completeMerchantValidation(merchantSession);
+            session.completeMerchantValidation(JSON.parse(data));
+            
+            this.addLog("After calling completeMerchantValidation");
+          })
     };
     
     session.onpaymentmethodselected = (event: any) => {
-      this.debugInfo = this.debugInfo + ' Inside onpaymentmethodselected.';
-        // Define ApplePayPaymentMethodUpdate based on the selected payment method.
-        // No updates or errors are needed, pass an empty object.
-        const update = {};
+      this.addLog("Start onpaymentmethodselected");
+      const update = {
+        newTotal: {
+          "label": "Integrapay HPP",
+          "amount": "1.99",
+          "type": "final"
+        },
+        newLineItems: []
+        // newLineItems: [{
+        //   "label": "Free Shipping",
+        //   "amount": "50.00",
+        //   "type": "final"
+        // }]
+      };
         session.completePaymentMethodSelection(update);
+        this.addLog("After calling onpaymentmethodselected");
     };
     
     session.onshippingmethodselected = (event: any) => {
-      this.debugInfo = this.debugInfo + ' Inside onshippingmethodselected.';
-        // Define ApplePayShippingMethodUpdate based on the selected shipping method.
-        // No updates or errors are needed, pass an empty object. 
-        const update = {};
+      this.addLog("Start onshippingmethodselected.");
+      const update = {
+        status: 'STATUS_SUCCESS',
+        newShippingMethods: {    
+          "label": "Free Shipping",
+          "detail": "Arrives in 5 to 7 days",
+          "amount": "0.00",
+          "identifier": "FreeShip"
+        },
+        newTotal: {
+          "label": "Free Shipping",
+          "amount": "50.00",
+          "type": "final"
+        },
+        newLineItems: [{
+          "label": "Free Shipping",
+          "amount": "50.00",
+          "type": "final"
+        }]
+      };
         session.completeShippingMethodSelection(update);
     };
     
     session.onshippingcontactselected = (event: any) => {
-      this.debugInfo = this.debugInfo + ' Inside onshippingcontactselected.';
-        // Define ApplePayShippingContactUpdate based on the selected shipping contact.
-        const update = {
-          status: 'STATUS_SUCCESS',
-          newShippingMethods: {    
-            "label": "Free Shipping",
-            "detail": "Arrives in 5 to 7 days",
-            "amount": "0.00",
-            "identifier": "FreeShip"
-          },
-          newTotal: {
-            "label": "Free Shipping",
-            "amount": "5.00",
-            "type": "final"
-          },
-          newLineItems: [{
-            "label": "Free Shipping",
-            "amount": "5.00",
-            "type": "final"
-          }]
-        };
+      this.addLog("Start onshippingcontactselected.");
+        const update = {};
         session.completeShippingContactSelection(update);
     };
     
     session.onpaymentauthorized = (event: any) => {
-      this.debugInfo = this.debugInfo + ' Inside onpaymentauthorized.';
-        // Define ApplePayPaymentAuthorizationResult
+      this.addLog("Start onpaymentauthorized.");
         const result = {
             "status": (window as any).ApplePaySession.STATUS_SUCCESS
         };
@@ -181,17 +147,21 @@ export class ApplePayComponent implements OnInit {
     };
     
     session.oncancel = (event: any) => {
-      this.debugInfo = this.debugInfo + ' Inside oncancel.';
+      this.addLog('Start oncancel.');
+      this.addLog("event :" + JSON.stringify(event));
         // Payment cancelled by WebKit
     };
     
-    this.debugInfo = this.debugInfo + ' Session begins.  ' + JSON.stringify(session);
     session.begin();
-    this.debugInfo = this.debugInfo + ' Session Began.  ' + JSON.stringify(session);
     }
     catch(e)
     {
-      this.debugInfo = this.debugInfo + e;
+      this.addLog(e);
     }
+  }
+
+  addLog(log:string)
+  {
+    this.debugLog = this.debugLog + "\n\n" +"<br>"+ log;
   }
 }

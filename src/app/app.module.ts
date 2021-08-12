@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { ApplePayComponent } from './apple-pay/apple-pay.component';
 import { GooglePayComponent } from './google-pay/google-pay.component';
 import { GooglePayButtonModule } from "@google-pay/button-angular";
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -14,7 +15,8 @@ import { GooglePayButtonModule } from "@google-pay/button-angular";
   ],
   imports: [
     BrowserModule,
-    GooglePayButtonModule
+    GooglePayButtonModule,
+    HttpClientModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
