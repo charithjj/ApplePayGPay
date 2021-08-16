@@ -13,23 +13,23 @@ export class ApplePayComponent implements OnInit {
   }
 
   debugLog = "";
+  apiBase = "https://apptesting-qa.pymnts.com.au/api"
 
   ngAfterViewInit() {
-    if ((window as any).ApplePaySession) {
-      const button = this.renderer.createElement('apple-pay-button');
-      this.renderer.setAttribute(this.but.nativeElement, 'buttonstyle', 'black');
-      this.renderer.setAttribute(this.but.nativeElement, 'type', 'buy');
-      this.renderer.setAttribute(this.but.nativeElement, 'locale', 'en-us');
-      this.renderer.setStyle(this.but.nativeElement, 'display', 'inline-block', RendererStyleFlags2.Important);
-      this.renderer.appendChild(this.but.nativeElement, button);
-    }
+    // if ((window as any).ApplePaySession) {
+    //   const button = this.renderer.createElement('apple-pay-button');
+    //   this.renderer.setAttribute(this.but.nativeElement, 'buttonstyle', 'black');
+    //   this.renderer.setAttribute(this.but.nativeElement, 'type', 'buy');
+    //   this.renderer.setAttribute(this.but.nativeElement, 'locale', 'en-us');
+    //   this.renderer.setStyle(this.but.nativeElement, 'display', 'inline-block', RendererStyleFlags2.Important);
+    //   this.renderer.appendChild(this.but.nativeElement, button);
+    // }
   }
 
   ngOnInit(): void {
   }
 
   GetPaymentSession(uri:string): Observable<any>{    
-    // Adding body or contents to send
     const body = JSON.stringify({
       ValidationUrl: uri
     });
@@ -37,11 +37,36 @@ export class ApplePayComponent implements OnInit {
     // Adding headers to the request
     const header = {"Content-type": "application/json; charset=UTF-8" };
 
-    this.addLog("Calling IntegraPay server" + new Date().toLocaleString() + " Body : " + body);
+    this.addLog("Calling IntegraPay server GetPaymentSession:" + new Date().toLocaleString() + " Body : " + body);
 
-    return this.http.post("https://apptesting-qa.pymnts.com.au/internal/applepay/startsession", body, {'headers':header})  
-    //return this.http.post("https://apptesting-qa.pymnts.com.au/internal/applepay/startsession", body, {'headers':header})  
+    return this.http.post(this.apiBase + "/internal/applepay/startsession", body, {'headers':header}) 
   }
+
+  // NotifyOnPaymentMethodSelected(e:any): Observable<any>{    
+  //   const body = JSON.stringify({
+  //     EventObj: e
+  //   });
+
+  //   // Adding headers to the request
+  //   const header = {"Content-type": "application/json; charset=UTF-8" };
+
+  //   this.addLog("Calling IntegraPay server NotifyOnPaymentMethodSelected:" + new Date().toLocaleString() + " Body : " + body);
+
+  //   return this.http.post(this.apiBase + "/internal/applepay/OnPaymentMethodSelected", body, {'headers':header}) 
+  // }
+
+  // NotifyOnPaymentAuthorized(e:any): Observable<any>{    
+  //   const body = JSON.stringify({
+  //     EventObj: e
+  //   });
+
+  //   // Adding headers to the request
+  //   const header = {"Content-type": "application/json; charset=UTF-8" };
+
+  //   this.addLog("Calling IntegraPay server NotifyOnPaymentAuthorized:" + new Date().toLocaleString() + " Body : " + body);
+
+  //   return this.http.post(this.apiBase + "/internal/applepay/NotifyOnPaymentAuthorized", body, {'headers':header}) 
+  // }
 
   async onApplePayClick() {
     try
@@ -91,21 +116,30 @@ export class ApplePayComponent implements OnInit {
     
     session.onpaymentmethodselected = (event: any) => {
       this.addLog("Start onpaymentmethodselected");
+      // this.addLog("event.paymentMethod " + JSON.stringify(event.paymentMethod));
+      // this.addLog("event.paymentPass " + JSON.stringify(event.paymentMethod.paymentPass));
+
+        // this.NotifyOnPaymentMethodSelected(event).subscribe(data =>
+        //   {
+        //     this.addLog("Received data (onpaymentmethodselected)" + new Date().toLocaleString() + " data " + data);
+        //   })
+
       const update = {
         newTotal: {
           "label": "Integrapay HPP",
           "amount": "1.99",
           "type": "final"
         },
-        newLineItems: []
-        // newLineItems: [{
-        //   "label": "Free Shipping",
-        //   "amount": "50.00",
-        //   "type": "final"
-        // }]
+       //newLineItems: []
+        newLineItems: [{
+          "label": "Card processing fee",
+          "amount": "0.35",
+          "type": "final"
+        }]
       };
         session.completePaymentMethodSelection(update);
         this.addLog("After calling onpaymentmethodselected");
+        this.addLog(JSON.stringify(session));
     };
     
     session.onshippingmethodselected = (event: any) => {
@@ -120,12 +154,12 @@ export class ApplePayComponent implements OnInit {
         },
         newTotal: {
           "label": "Free Shipping",
-          "amount": "50.00",
+          "amount": "1.99",
           "type": "final"
         },
         newLineItems: [{
           "label": "Free Shipping",
-          "amount": "50.00",
+          "amount": "1.99",
           "type": "final"
         }]
       };
@@ -138,8 +172,15 @@ export class ApplePayComponent implements OnInit {
         session.completeShippingContactSelection(update);
     };
     
-    session.onpaymentauthorized = (event: any) => {
-      this.addLog("Start onpaymentauthorized.");
+    session.onPaymentauthorized = (event: any) => {
+      this.addLog("Start onpaymentmethodselected");
+      ///is.addLog("Token : " +event.payment.token);
+
+        // this.NotifyOnPaymentAuthorized(event).subscribe(data =>
+        //   {
+        //     this.addLog("Received data (onPaymentauthorized) " + new Date().toLocaleString() + " data " + data);
+        //   })
+
         const result = {
             "status": (window as any).ApplePaySession.STATUS_SUCCESS
         };
@@ -163,5 +204,6 @@ export class ApplePayComponent implements OnInit {
   addLog(log:string)
   {
     this.debugLog = this.debugLog + "\n\n" +"<br>"+ log;
+    console.log(log);
   }
 }
