@@ -1,3 +1,4 @@
+import { JsonpClientBackend } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { ReadyToPayChangeResponse } from '@google-pay/button-angular';
 
@@ -8,6 +9,7 @@ import { ReadyToPayChangeResponse } from '@google-pay/button-angular';
 })
 export class GooglePayComponent {
 
+  debugLog = "";
   amount = '1.99';
   buttonType: google.payments.api.ButtonType = 'buy';
   buttonColor: google.payments.api.ButtonColor = 'default';
@@ -21,8 +23,8 @@ export class GooglePayComponent {
       {
         type: 'CARD',
         parameters: {
-          allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-          allowedCardNetworks: ['MASTERCARD', 'VISA'],
+          allowedAuthMethods: ['PAN_ONLY'],
+          allowedCardNetworks: ['MASTERCARD', 'VISA', 'AMEX'],
         },
         tokenizationSpecification: {
           type: 'PAYMENT_GATEWAY',
@@ -42,19 +44,20 @@ export class GooglePayComponent {
       totalPriceLabel: 'Total',
       totalPrice: '10',
       currencyCode: 'AUD'
-    }
+    },
+    callbackIntents:['PAYMENT_AUTHORIZATION']
   };
 
   onLoadPaymentData = (event: CustomEvent<google.payments.api.PaymentData>): void => {
-    console.log('load payment data', event.detail);
+    this.addLog('load payment data' + JSON.stringify(event.detail));
   };
 
   onError = (event: ErrorEvent): void => {
-    console.error('error', event.error);
+    this.addLog('error' + JSON.stringify(event.error));
   };
 
   onPaymentDataAuthorized: google.payments.api.PaymentAuthorizedHandler = paymentData => {
-    console.log('payment authorized', paymentData);
+    this.addLog('payment authorized' + JSON.stringify(paymentData));
 
     return {
       transactionState: 'SUCCESS',
@@ -62,17 +65,21 @@ export class GooglePayComponent {
   };
 
   onReadyToPayChange = (event: CustomEvent<ReadyToPayChangeResponse>): void => {
-    console.log('ready to pay change', event.detail);
+    this.addLog('ready to pay change' + JSON.stringify(event.detail));
   };
 
   onClick = (event: Event): void => {
-    console.log('click');
+    this.addLog('click');
   };
 
   onClickPreventDefault = (event: Event): void => {
-    console.log('prevent default');
+    this.addLog('prevent default');
     event.preventDefault();
   };
 
-
+  addLog(log:string)
+  {
+    this.debugLog = this.debugLog + "\n\n" +"<br>"+ log;
+    console.log(log);
+  }
 }
